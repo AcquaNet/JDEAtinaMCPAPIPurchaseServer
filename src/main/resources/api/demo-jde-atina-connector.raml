@@ -1,0 +1,465 @@
+#%RAML 1.0
+title: JDE Atina Connector Demo
+version: v1
+documentation:
+ - title: Home
+   content: |
+     Showing Atina JDE Connector.  
+
+/v1:
+  /getPurchaseOrdersForApprover:
+    get:
+      description: |
+        Get pending purchase orders for the approver identified by a custom token header.
+        If the current session/token is still valid or renewed, a new JDEToken is returned
+        in the response headers for subsequent calls.
+      headers:
+        X-Approver-Token:
+          displayName: Approver Token
+          type: string
+          required: true
+          description: Custom token that identifies the JDE approver/session in Atina Microservice.
+      responses:
+        200:
+          description: OK
+          headers:
+            X-Approver-Token:
+              displayName: JDE Token
+              type: string
+              required: true
+              description: >
+                New or refreshed JDE session token. Clients should store and send this
+                token in subsequent requests where required.
+          body:
+            application/json:
+              type: |
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "documentCompanyKeyOrderNo": {
+                        "type": "string"
+                      },
+                      "documentOrderTypeCode": {
+                        "type": "string"
+                      },
+                      "documentOrderInvoiceNumber": {
+                        "type": "integer"
+                      },
+                      "documentSuffix": {
+                        "type": "string"
+                      },
+                      "statusApproval": {
+                        "type": "string"
+                      },
+                      "approvalRoutingCodePurchaseOrder": {
+                        "type": "string"
+                      },
+                      "entityNameOriginator": {
+                        "type": "string"
+                      },
+                      "entityNameSupplier": {
+                        "type": "string"
+                      },
+                      "entityNameShipTo": {
+                        "type": "string"
+                      },
+                      "dateTransaction": {
+                        "type": "string",
+                        "description": "Transaction date in ISO format (YYYY-MM-DD)"
+                      },
+                      "currencyMode": {
+                        "type": "string"
+                      },
+                      "amountGross": {
+                        "type": "number"
+                      },
+                      "currencyCodeBase": {
+                        "type": "string"
+                      },
+                      "amountForeign": {
+                        "type": "number"
+                      },
+                      "currencyCodeForeign": {
+                        "type": "string"
+                      },
+                      "businessUnitCode": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              example: |
+                [
+                  {
+                    "documentCompanyKeyOrderNo": "00001",
+                    "documentOrderTypeCode": "OP",
+                    "documentOrderInvoiceNumber": 5067,
+                    "documentSuffix": "000",
+                    "statusApproval": "2N",
+                    "approvalRoutingCodePurchaseOrder": "DEMO",
+                    "entityNameOriginator": "Financial/Distribution Company --",
+                    "entityNameSupplier": "Parts Emporium",
+                    "entityNameShipTo": "Parts Emporium",
+                    "dateTransaction": "2021-03-21",
+                    "currencyMode": "D",
+                    "amountGross": 876755,
+                    "currencyCodeBase": "USD",
+                    "amountForeign": 0,
+                    "currencyCodeForeign": "USD",
+                    "businessUnitCode": "          30"
+                  }
+                ]
+  /getPurchaseOrderDetailForApprover:
+    get:
+      description: Get purchase order line details for the approver identified by a custom token header.
+      headers:
+        X-Approver-Token:
+          displayName: Approver Token
+          type: string
+          required: true
+          description: Custom token that identifies the JDE approver/session in Atina Microservice.
+      queryParameters:
+        documentCompanyKeyOrderNo:
+          displayName: Document Company Key Order No
+          type: string
+          required: true
+        documentOrderTypeCode:
+          displayName: Document Order Type Code
+          type: string
+          required: true
+        documentOrderInvoiceNumber:
+          displayName: Document Order / Invoice Number
+          type: integer
+          required: true
+        documentSuffix:
+          displayName: Document Suffix
+          type: string
+          required: true
+      responses:
+        200:
+          description: OK
+          body:
+            application/json:
+              type: |
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "companyKeyOrderNo": {
+                        "type": "string"
+                      },
+                      "documentLineNumber": {
+                        "type": "integer"
+                      },
+                      "identifierShortItem": {
+                        "type": "integer"
+                      },
+                      "dateRequested": {
+                        "type": "string",
+                        "description": "Requested date in ISO format (YYYY-MM-DD)"
+                      },
+                      "identifier2ndItem": {
+                        "type": "string"
+                      },
+                      "descriptionLine1": {
+                        "type": "string"
+                      },
+                      "subledgerTypeCode": {
+                        "type": "string"
+                      },
+                      "companyKeyRelated": {
+                        "type": "string"
+                      },
+                      "poSoLineNoRelated": {
+                        "type": "integer"
+                      },
+                      "documentSuffix": {
+                        "type": "string"
+                      },
+                      "lineTypeCode": {
+                        "type": "string"
+                      },
+                      "orderTypeCodeRelated": {
+                        "type": "string"
+                      },
+                      "poSoNumberRelated": {
+                        "type": "string"
+                      },
+                      "acctNumber": {
+                        "type": "string"
+                      },
+                      "amountForeignExtendPrice": {
+                        "type": "number"
+                      },
+                      "currencyCodeForeign": {
+                        "type": "string"
+                      },
+                      "supplier": {
+                        "type": "object",
+                        "properties": {
+                          "entityTaxId": {
+                            "type": ["string", "null"]
+                          },
+                          "entityLongId": {
+                            "type": ["string", "null"]
+                          },
+                          "entityId": {
+                            "type": "integer"
+                          }
+                        }
+                      },
+                      "unitOfMeasurePurchasing": {
+                        "type": "string"
+                      },
+                      "businessUnitCode": {
+                        "type": "string"
+                      },
+                      "statusLastCode": {
+                        "type": "string"
+                      },
+                      "unitsTransactionQty": {
+                        "type": "number"
+                      },
+                      "documentOrderTypeCode": {
+                        "type": "string"
+                      },
+                      "statusCodeNextCode": {
+                        "type": "string"
+                      },
+                      "documentOrderInvoiceNumber": {
+                        "type": "integer"
+                      },
+                      "foreignPurchasingPrice": {
+                        "type": "number"
+                      },
+                      "dateTransaction": {
+                        "type": "string",
+                        "description": "Transaction date in ISO format (YYYY-MM-DD)"
+                      },
+                      "amountExtendedPrice": {
+                        "type": "number"
+                      },
+                      "assetIDNumber": {
+                        "type": "string"
+                      },
+                      "purchasingUnitPrice": {
+                        "type": "number"
+                      },
+                      "discountFactor": {
+                        "type": "number"
+                      },
+                      "subledger": {
+                        "type": "string"
+                      },
+                      "unitOfMeasureCode": {
+                        "type": "string"
+                      },
+                      "shipTo": {
+                        "type": "object",
+                        "properties": {
+                          "entityTaxId": {
+                            "type": ["string", "null"]
+                          },
+                          "entityLongId": {
+                            "type": ["string", "null"]
+                          },
+                          "entityId": {
+                            "type": "integer"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              example: |
+                [
+                  {
+                    "companyKeyOrderNo": "00001",
+                    "documentLineNumber": 1,
+                    "identifierShortItem": 355710,
+                    "dateRequested": "2025-11-18",
+                    "identifier2ndItem": "CARBURETOR",
+                    "descriptionLine1": "Carburetor1",
+                    "subledgerTypeCode": "",
+                    "companyKeyRelated": "     ",
+                    "poSoLineNoRelated": 0,
+                    "documentSuffix": "000",
+                    "lineTypeCode": "S",
+                    "orderTypeCodeRelated": "  ",
+                    "poSoNumberRelated": "        ",
+                    "acctNumber": "",
+                    "amountForeignExtendPrice": 0,
+                    "currencyCodeForeign": "USD",
+                    "supplier": {
+                      "entityTaxId": null,
+                      "entityLongId": null,
+                      "entityId": 4343
+                    },
+                    "unitOfMeasurePurchasing": "EA",
+                    "businessUnitCode": "30",
+                    "statusLastCode": "220",
+                    "unitsTransactionQty": 50,
+                    "documentOrderTypeCode": "OP",
+                    "statusCodeNextCode": "230",
+                    "documentOrderInvoiceNumber": 5070,
+                    "foreignPurchasingPrice": 0,
+                    "dateTransaction": "2025-11-18",
+                    "amountExtendedPrice": 4383.78,
+                    "assetIDNumber": "",
+                    "purchasingUnitPrice": 87.6755,
+                    "discountFactor": 1,
+                    "subledger": "",
+                    "unitOfMeasureCode": "EA",
+                    "shipTo": {
+                      "entityTaxId": null,
+                      "entityLongId": null,
+                      "entityId": 4343
+                    }
+                  },
+                  {
+                    "companyKeyOrderNo": "00001",
+                    "documentLineNumber": 2,
+                    "identifierShortItem": 355710,
+                    "dateRequested": "2025-11-18",
+                    "identifier2ndItem": "CARBURETOR",
+                    "descriptionLine1": "Carburetor1",
+                    "subledgerTypeCode": "",
+                    "companyKeyRelated": "     ",
+                    "poSoLineNoRelated": 0,
+                    "documentSuffix": "000",
+                    "lineTypeCode": "S",
+                    "orderTypeCodeRelated": "  ",
+                    "poSoNumberRelated": "        ",
+                    "acctNumber": "",
+                    "amountForeignExtendPrice": 0,
+                    "currencyCodeForeign": "USD",
+                    "supplier": {
+                      "entityTaxId": null,
+                      "entityLongId": null,
+                      "entityId": 4343
+                    },
+                    "unitOfMeasurePurchasing": "EA",
+                    "businessUnitCode": "30",
+                    "statusLastCode": "220",
+                    "unitsTransactionQty": 90,
+                    "documentOrderTypeCode": "OP",
+                    "statusCodeNextCode": "230",
+                    "documentOrderInvoiceNumber": 5070,
+                    "foreignPurchasingPrice": 0,
+                    "dateTransaction": "2025-11-18",
+                    "amountExtendedPrice": 7890.8,
+                    "assetIDNumber": "",
+                    "purchasingUnitPrice": 87.6755,
+                    "discountFactor": 1,
+                    "subledger": "",
+                    "unitOfMeasureCode": "EA",
+                    "shipTo": {
+                      "entityTaxId": null,
+                      "entityLongId": null,
+                      "entityId": 4343
+                    }
+                  }
+                ]                
+  /processPurchaseOrderApproveReject:
+    post:
+      description: Process a purchase order action (approve or reject) for the approver identified by a custom token header.
+      
+      headers:
+        X-Approver-Token:
+          displayName: Approver Token
+          type: string
+          required: true
+          description: Custom token that identifies the JDE approver/session in Atina Microservice.
+
+      body:
+        application/json:
+          type: |
+            {
+              "type": "object",
+              "properties": {
+
+                "documentCompanyKeyOrderNo": {
+                  "type": "string",
+                  "displayName": "Document Company Key Order No",
+                  "description": "Company key for the order"
+                },
+
+                "documentOrderTypeCode": {
+                  "type": "string",
+                  "displayName": "Document Order Type Code",
+                  "description": "Order type code (e.g. OP)"
+                },
+
+                "documentOrderInvoiceNumber": {
+                  "type": "number",
+                  "displayName": "Document Order / Invoice Number",
+                  "description": "Order number"
+                },
+
+                "documentSuffix": {
+                  "type": "string",
+                  "displayName": "Document Suffix",
+                  "description": "Document suffix"
+                }, 
+                
+                "action": {
+                  "type": "string",
+                  "enum": ["A", "R"],
+                  "displayName": "Action",
+                  "description": "A = Approve, R = Reject"
+                },
+
+                "remark": {
+                  "type": "string",
+                  "maxLength": 30,
+                  "displayName": "Remark",
+                  "description": "Optional comment describing the reason for approval or rejection"
+                }
+              },
+              "required": [
+                "documentCompanyKeyOrderNo",
+                "documentOrderTypeCode",
+                "documentOrderInvoiceNumber",
+                "documentSuffix",
+                "action",
+                "remark"
+              ]
+            }
+
+          example: |
+            {
+              "documentCompanyKeyOrderNo": "00001",
+              "documentOrderTypeCode": "OP",
+              "documentOrderInvoiceNumber": 5070,
+              "documentSuffix": "000",
+              "action": "A",
+              "remark": "Approved Demo"
+            }
+
+      responses:
+        200:
+          description: OK
+          body:
+            application/json:
+              type: |
+                {
+                  "type": "object",
+                  "properties": {
+                    "confirmApproveRejectSucess": {
+                      "type": "string",
+                      "description": "Processing result flag. '0' indicates success."
+                    },
+                    "numberOfPurchaseOrdersProcessed": {
+                      "type": "integer",
+                      "description": "Number of purchase orders processed during this operation."
+                    }
+                  }
+                }
+              example: |
+                {
+                  "confirmApproveRejectSucess": "1",
+                  "numberOfPurchaseOrdersProcessed": 1
+                }

@@ -1,0 +1,260 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:jdeatina="http://www.mulesoft.org/schema/mule/jdeatina"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/jdeatina http://www.mulesoft.org/schema/mule/jdeatina/current/mule-jdeatina.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
+	<os:object-store name="Object_Store_Order" doc:name="Object store" doc:id="dd6258d9-5128-4afe-8d86-30f5d6f8685a" maxEntries="100" entryTtl="15" entryTtlUnit="MINUTES" expirationInterval="5" />
+	<flow name="get-pending-orders-flow" doc:id="02c9d202-4eee-42e2-bec8-b75fef3641b6" >
+		<jdeatina:authenticate authenticateOperation="Login using Token" doc:name="Authenticate" doc:id="55b97352-865a-4115-920f-cf13fe8f6c98" config-ref="JDE_Atina_Config_for_Web_Services" >
+			<jdeatina:input-parameters ><![CDATA[#[output application/java
+---
+{
+	"JDE Token": attributes.headers."X-Approver-Token" as String default "",
+	"Transaction ID": 0,
+	"JDE WS Connection": true
+}]]]></jdeatina:input-parameters>
+		</jdeatina:authenticate>
+		<jdeatina:invoke-ws wsName="oracle.e1.bssv.JP430000.ProcurementManager.getPurchaseOrdersForApprover" doc:name="Invoke ws getPurchaseOrdersForApprover" doc:id="fe9aa982-114f-468e-a95d-b6551167bb14" config-ref="JDE_Atina_Config_for_Web_Services" target="orders" >
+			<jdeatina:input-parameters ><![CDATA[#[output application/java
+---
+{
+	"JDE Token": payload."JDE Token",
+	approver: {
+		entityId: payload."JDE A/B No" as Number
+	},
+	orderTypeCode:p('po.orderTypeCode'),
+	businessUnitCode:p('po.businessUnitCode'),
+	statusCodeNext:p('po.statusCodeNext'),
+	statusApproval:p('po.statusApproval')
+}]]]></jdeatina:input-parameters>
+		</jdeatina:invoke-ws>
+		<logger level="INFO" doc:name="Logger" doc:id="a6f7158c-7f0a-44a6-823e-7b9ed23cb1d5" message="#[vars.orders]"/>
+		<ee:transform doc:name="Set Response" doc:id="5926698e-a056-4b08-bfda-bbd3d16ad25b" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+var today = now() as Date
+---
+vars.orders.purchaseOrdersForApproverResults map ((item, index) -> {
+	documentCompanyKeyOrderNo: item.documentCompanyKeyOrderNo,
+	documentOrderTypeCode:item.documentOrderTypeCode,
+	documentOrderInvoiceNumber:item.documentOrderInvoiceNumber,
+	documentSuffix:item.documentSuffix,
+	statusApproval:item.statusApproval,
+	approvalRoutingCodePurchaseOrder:item.approvalRoutingCodePurchaseOrder,
+	entityNameOriginator:item.entityNameOriginator,
+	entityNameSupplier:item.entityNameSupplier,
+	entityNameShipTo:item.entityNameShipTo,
+	currencyMode:item.currencyMode,
+	amountGross:item.amountGross,
+	currencyCodeBase:item.currencyCodeBase,
+	amountForeign:item.amountForeign,
+	currencyCodeForeign:item.currencyCodeForeign,
+	businessUnitCode:item.businessUnitCode,
+	dateRequested: item.dateRequested, 
+	dateTransaction:item.dateTransaction,
+	calculateValues: {
+		amountToApprove: if(item.currencyMode == "D") item.amountGross else item.amountForeign,
+		currencyToApprove: if(item.currencyMode == "D") item.currencyCodeBase else item.currencyCodeForeign,
+		daysOld: (today - item.dateRequested as Date).days
+	}
+             
+})]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<async doc:name="Async" doc:id="fd59a469-88ef-4518-b5c5-d8745e82431c" maxConcurrency="1">
+			<foreach doc:name="For Each" doc:id="dca4280d-9648-4e4c-a3f5-487493fdcb3a" collection="#[vars.orders.purchaseOrdersForApproverResults]">
+				<logger level="INFO" doc:name="Logger" doc:id="e057794b-3758-45ea-a817-ee161d144085" message="#[payload]"/>
+				<os:store doc:name="Store" doc:id="40612093-13ab-4478-8587-a9f447c363f5" key='#[(payload.documentCompanyKeyOrderNo default "") ++ (payload.documentOrderTypeCode default "") ++ (payload.documentOrderInvoiceNumber as String default "") ++  ( payload.documentSuffix default "")]' objectStore="Object_Store_Order">
+					<os:value ><![CDATA[#[%dw 2.0
+output application/java
+---
+payload]]]></os:value>
+				</os:store>
+			</foreach>
+		</async>
+		<set-variable value='#[%dw 2.0&#10;output application/java&#10;---&#10;(vars.outboundHeaders default {}) &#10;++ { "X-Approver-Token": vars.orders."JDE Token" }]' doc:name="Set Header Response" doc:id="01611158-6081-470d-910e-b4acf66b5f63" variableName="outboundHeaders"/>
+		<error-handler>
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="434cbf5c-28b6-4ca9-8f3b-86d3fbab47f3" type="JDEATINA:ERROR_INVOKING_WS">
+				<raise-error doc:name="Raise error" doc:id="c0a2034d-12d2-4a14-8c75-82e58cae30c3" type="APP:ERROR_WS_GETPENDING" description="Error processing pending purchase orders" />
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="get-pending-detail-orders-flow" doc:id="971c10b2-1b51-4035-bb45-4bb85da45302">
+		<set-variable value="#[attributes.queryParams]" doc:name="Save Query Parameters" doc:id="da1ab42f-22f2-47da-b88f-dd42d0b92728" variableName="parameters"/>
+		<jdeatina:authenticate authenticateOperation="Login using Token" doc:name="Authenticate" doc:id="6c10f9b1-7675-4064-94ff-0a9601bb4f74" config-ref="JDE_Atina_Config_for_Web_Services">
+			<jdeatina:input-parameters><![CDATA[#[output application/java
+---
+{
+	"JDE Token": attributes.headers."X-Approver-Token" as String default "",
+	"Transaction ID": 0,
+	"JDE WS Connection": true
+}]]]></jdeatina:input-parameters>
+		</jdeatina:authenticate>
+		<jdeatina:invoke-ws wsName="oracle.e1.bssv.JP430000.ProcurementManager.getPurchaseOrderV2" doc:name="Invoke ws getPurchaseOrdersForApprover1" doc:id="54cfdca5-4027-4fdf-a650-3012b54986fc" config-ref="JDE_Atina_Config_for_Web_Services" target="ordersHeader">
+			<jdeatina:input-parameters><![CDATA[#[output application/json
+---
+{
+	"JDE Token": payload."JDE Token",
+	header: {
+		purchaseOrderKey: {
+			documentTypeCode: vars.parameters.documentOrderTypeCode,
+			documentNumber: vars.parameters.documentOrderInvoiceNumber,
+			documentCompany: vars.parameters.documentCompanyKeyOrderNo
+		}
+	}
+}]]]></jdeatina:input-parameters>
+		</jdeatina:invoke-ws>
+		<choice doc:name="Choice" doc:id="f7e4b870-27a8-4e51-bf92-f8df4bf6f93c" >
+			<when expression="#[!isEmpty(vars.ordersHeader.showPurchaseOrder)]">
+				<jdeatina:invoke-ws wsName="oracle.e1.bssv.JP430000.ProcurementManager.getPurchaseOrderDetailForApprover" doc:name="Invoke ws getPurchaseOrdersForApprover" doc:id="545ba4ff-9119-4472-8a62-3261d7576df0" config-ref="JDE_Atina_Config_for_Web_Services" target="ordersDetail">
+			<jdeatina:input-parameters><![CDATA[#[output application/java
+---
+{
+	"JDE Token": payload."JDE Token",
+	companyKeyOrderNo: vars.parameters.documentCompanyKeyOrderNo,
+	documentOrderTypeCode: vars.parameters.documentOrderTypeCode,
+	statusCodeNext: p('po.statusCodeNext'),
+	documentOrderInvoiceNumber: vars.parameters.documentOrderInvoiceNumber,
+	documentSuffix: vars.parameters.documentSuffix,
+}]]]></jdeatina:input-parameters>
+		</jdeatina:invoke-ws>
+				<ee:transform doc:name="Set Response" doc:id="888dbe4e-d0ac-497f-8e8f-ebdd968ab991">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	header: vars.ordersHeader.showPurchaseOrder,
+	detail: vars.ordersDetail.purchaseOrderDetailForApproverResults map ((item, index) -> item)
+	}
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+				<set-variable value='#[%dw 2.0&#10;output application/java&#10;---&#10;(vars.outboundHeaders default {}) &#10;++ { "X-Approver-Token": vars.ordersDetail."JDE Token" }]' doc:name="Set Header Response" doc:id="06223fcb-cf27-4513-9aeb-7fbe4890b3e0" variableName="outboundHeaders" />
+			</when>
+			<otherwise >
+				<raise-error doc:name="Raise error" doc:id="0f02cf3a-281b-4487-a18c-2e60d1eb14bb" type="APP:ERROR_WS_GETPENDING" description="Order not found"/>
+			</otherwise>
+		</choice>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="5ded7f9e-01bf-4fa0-baac-c19f402792b2" type="JDEATINA:ERROR_INVOKING_WS" >
+				<raise-error doc:name="Raise error" doc:id="34730537-44d4-409e-97a8-eba9082d9a61" type="APP:ERROR_WS_GETPENDING" description="Error getting pending purchase order" />
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="get-pending-aprove-flow" doc:id="947004f6-28d4-4d34-bb84-36c47d56db24" >
+		<set-variable value="#[payload]" doc:name="Save Payload Parameters" doc:id="2cb453e4-1496-4f07-a761-a062a1179a13" variableName="parameters" />
+		<jdeatina:authenticate authenticateOperation="Login using Token" doc:name="Authenticate" doc:id="8c234c7d-8701-4ca2-ab68-ca57dc51c314" config-ref="JDE_Atina_Config_for_Web_Services" target="autenticate">
+			<jdeatina:input-parameters><![CDATA[#[output application/java
+---
+{
+	"JDE Token": attributes.headers."X-Approver-Token" as String default "",
+	"Transaction ID": 0,
+	"JDE WS Connection": true
+}]]]></jdeatina:input-parameters>
+		</jdeatina:authenticate>
+		<os:contains doc:name="Contains Order?" doc:id="516e3be2-eacf-4a7c-ab82-f4b00f747ae7" key='#[(vars.parameters.documentCompanyKeyOrderNo default "") ++ (vars.parameters.documentOrderTypeCode default "") ++ (vars.parameters.documentOrderInvoiceNumber as String default "") ++  (vars.parameters.documentSuffix default "")]' objectStore="Object_Store_Order" target="containOrder"/>
+		<choice doc:name="Choice" doc:id="2c7d42a1-0454-4e43-990b-840d36fb7d04" >
+			<when expression="#[vars.containOrder]">
+				<logger level="INFO" doc:name="Logger" doc:id="5db9d5f8-383d-4567-b0f4-558a9ccefaed" message="Xontiene la orden"/>
+				<os:retrieve doc:name="Get Order" doc:id="61d0a555-cc51-4c30-934f-12401f3f9f9f" key='#[(vars.parameters.documentCompanyKeyOrderNo default "") ++ (vars.parameters.documentOrderTypeCode default "") ++ (vars.parameters.documentOrderInvoiceNumber as String default "") ++  (vars.parameters.documentSuffix default "")]' objectStore="Object_Store_Order" target="orderRetrieved">
+					<os:default-value ><![CDATA[#[{}]]]></os:default-value>
+				</os:retrieve>
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="Logger" doc:id="1e8cc2e8-962a-4aa3-959f-0694df81e9b7" message="No contiene la orden"/>
+				<flow-ref doc:name="Flow Reference" doc:id="c74bdc90-ac8a-421f-bcfa-c8161602ac7c" name="demo-pur-operations-get-order"/>
+			</otherwise>
+		</choice>
+		<set-variable value='#[""]' doc:name="Set JDE Status" doc:id="ec6eecd6-5ad7-4630-9329-07e1f767dc4e" variableName="errorJDEMessage"/>
+		<try doc:name="Try" doc:id="adcd2dc8-5341-4d40-adfe-66f50f1f492d" >
+			<jdeatina:invoke-ws wsName="oracle.e1.bssv.JP430000.ProcurementManager.processPurchaseOrderApproveReject" doc:name="Invoke ws getPurchaseOrdersForApprover" doc:id="c9eea305-941f-4b7b-a78f-39f9c74394dd" config-ref="JDE_Atina_Config_for_Web_Services" target="ordersAproved">
+			<jdeatina:input-parameters><![CDATA[#[output application/json
+---
+{
+	"JDE Token": vars.autenticate."JDE Token",
+	p43081Version: p('po.p43081Version'),
+	businessUnit: vars.orderRetrieved.businessUnitCode,
+	companyKeyOrderNumber: vars.parameters.documentCompanyKeyOrderNo,
+	documentType: vars.parameters.documentOrderTypeCode,
+	documentNumber: vars.parameters.documentOrderInvoiceNumber,
+	orderSuffix: vars.parameters.documentSuffix,
+	remark: vars.parameters.remark,
+	statusApproval: vars.orderRetrieved.statusApproval,
+	budgetPassword: '',
+	amountToApprove: vars.orderRetrieved.amountGross,
+	approveReject: vars.parameters.action,
+	approverAddressNumber: vars.autenticate."JDE A/B No" as Number,
+	detail: [],
+	approvalRouteCode: vars.orderRetrieved.approvalRoutingCodePurchaseOrder
+}]]]></jdeatina:input-parameters>
+		</jdeatina:invoke-ws>
+			<logger level="INFO" doc:name="Logger" doc:id="82651dbf-19f8-4d60-99b5-de83877f4e40" message="#[vars.ordersAproved]"/>
+			<error-handler >
+				<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="4289cdbd-bcae-49bc-9e65-6dca053c8e78" type="JDEATINA:ERROR_INVOKING_WS">
+					<set-variable value="#[error.detailedDescription]" doc:name="Set JDE Status" doc:id="4aae58e6-dfdb-4ee0-99bc-d9403cd902d2" variableName="errorJDEMessage" />
+					<logger level="INFO" doc:name="Logger" doc:id="5eeb87b0-836c-418f-ab29-c4a8132674a9" message="#[error.detailedDescription]"/>
+				</on-error-continue>
+			</error-handler>
+		</try>
+		<ee:transform doc:name="Set Response" doc:id="8fcb01c8-c6c5-4681-b12d-7ede3e3c599c" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+if(vars.errorJDEMessage != "")
+vars.errorJDEMessage default "There is an error processing the PO"
+else 
+vars.ordersAproved]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<set-variable value='#[%dw 2.0&#10;output application/java&#10;---&#10;(vars.outboundHeaders default {}) &#10;++ { "X-Approver-Token": vars.ordersAproved."JDE Token" }]' doc:name="Set Header Response" doc:id="d56d644a-08d7-4b66-83dc-0ee21ff9fd88" variableName="outboundHeaders" />
+	</flow>
+	<sub-flow name="demo-pur-operations-get-order" doc:id="037b4c51-1655-4146-8a47-b53c3ccd9ff9" >
+		<jdeatina:invoke-ws wsName="oracle.e1.bssv.JP430000.ProcurementManager.getPurchaseOrder" doc:name="Invoke ws getPurchaseOrdersForApprover" doc:id="a4e457c3-20e4-421a-a212-ddc55d84db38" config-ref="JDE_Atina_Config_for_Web_Services" target="order" >
+			<jdeatina:input-parameters ><![CDATA[#[output application/java
+---
+{
+	"JDE Token": vars.autenticate."JDE Token",
+	header: {
+		businessUnit: p('po.businessUnitCode'),
+		purchaseOrderKey: {
+			documentTypeCode: vars.parameters.documentOrderTypeCode,
+			documentNumber: vars.parameters.documentOrderInvoiceNumber,
+			documentCompany: vars.parameters.documentCompanyKeyOrderNo
+		}
+	}
+}]]]></jdeatina:input-parameters>
+		</jdeatina:invoke-ws>
+		<choice doc:name="Choice" doc:id="71a561d5-f6e8-440e-a693-1ab053521693" >
+			<when expression="#[vars.order == null or isEmpty(vars.order)]">
+				<raise-error doc:name="Raise error" doc:id="15af06ea-2b02-4a9c-b7fc-a0267c0ee7be" type="APP:NOT_FOUND" description="Purchase order not found"/>
+			</when>
+			<otherwise >
+				<ee:transform doc:name="Set Response" doc:id="ed5e34c9-ce88-44c7-b423-711c04a36ed1">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="orderRetrieved"><![CDATA[%dw 2.0
+output application/java
+
+var inputObject = vars.order.showPurchaseOrder[0] default {}
+
+---
+{
+    statusApproval: p("po.statusApproval"),
+    approvalRoutingCodePurchaseOrder: inputObject.header.approvedRoutingBy,
+    amountGross: inputObject.header.amountGross default 0,
+    businessUnitCode: inputObject.header.businessUnit
+}
+]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+			</otherwise>
+		</choice>
+	</sub-flow>
+</mule>
