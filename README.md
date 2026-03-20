@@ -1,7 +1,7 @@
 # ATINA JDE Connector Demo
 
 This demo project showcases how to use the **ATINA JDE Mule Connector** to interact with JD Edwards EnterpriseOne through both Web Services (BSSV) and Business Functions (BSFN). It also includes a synchronization flow with Salesforce.
-
+Demo
 ---
 
 ## Project Structure
