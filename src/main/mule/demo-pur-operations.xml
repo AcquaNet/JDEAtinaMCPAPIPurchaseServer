@@ -7,6 +7,46 @@ http://www.mulesoft.org/schema/mule/jdeatina http://www.mulesoft.org/schema/mule
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
 http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
 	<os:object-store name="Object_Store_Order" doc:name="Object store" doc:id="dd6258d9-5128-4afe-8d86-30f5d6f8685a" maxEntries="100" entryTtl="15" entryTtlUnit="MINUTES" expirationInterval="5" />
+	<flow name="login-flow" doc:id="a1952934-ec08-4f35-853f-be2938f72b73" >
+		<jdeatina:authenticate authenticateOperation="Login using User and Password" doc:name="Authenticate" doc:id="a9401f27-b206-4d0d-b86b-ab97bf8d3fb0" config-ref="JDE_Atina_Config_for_Web_Services" target="login">
+			<jdeatina:input-parameters ><![CDATA[#[output application/java
+---
+{
+	"JDE User": payload.user as String default "",
+	"JDE Password": payload.password  as String default "",
+	"JDE Environment": payload.environment as String default p('config.jdeEnvironment'),
+	"JDE Role": payload.role as String default p('config.jdeRole'),
+	"Session Id": 0,
+	"Transaction ID": 0,
+	"JDE WS Connection": true
+}]]]></jdeatina:input-parameters>
+		</jdeatina:authenticate>
+		<ee:transform doc:name="Transform Message" doc:id="99fdd475-1c71-4054-8983-fc6c84193dc1" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+import fromBase64 from dw::core::Binaries
+import seconds from dw::core::Periods
+output application/json
+var jwtToken = vars.login."JDE Token"
+var jwtPayload =
+    (jwtToken splitBy ".")[1]
+        then fromBase64($) as String
+        then read($, "application/json")
+
+var expSeconds = (jwtPayload.exp as Number)
+var expDateTime = |1970-01-01T00:00:00Z| + seconds(expSeconds)
+---
+{
+	environment: vars.login.environment,
+	role: vars.login.role,
+	user: vars.login.user,
+	expiresAt: expDateTime
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<set-variable value='#[%dw 2.0&#10;output application/java&#10;---&#10;(vars.outboundHeaders default {}) &#10;++ { "X-Approver-Token": vars.login."JDE Token" }]' doc:name="Set Header Response" doc:id="7d9640e1-df85-4435-8b15-b4f047c33779" variableName="outboundHeaders" />
+		<logger level="INFO" doc:name="Logger" doc:id="dcbe43f7-e83e-4ca1-be14-b07c6aec3098" message="User Logged"/>
+	</flow>
 	<flow name="get-pending-orders-flow" doc:id="02c9d202-4eee-42e2-bec8-b75fef3641b6" >
 		<jdeatina:authenticate authenticateOperation="Login using Token" doc:name="Authenticate" doc:id="55b97352-865a-4115-920f-cf13fe8f6c98" config-ref="JDE_Atina_Config_for_Web_Services" >
 			<jdeatina:input-parameters ><![CDATA[#[output application/java

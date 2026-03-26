@@ -94,32 +94,32 @@ output application/json
                     </ee:variables>
                 </ee:transform>
             </on-error-propagate>
-			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate1" doc:id="d5d88f70-f007-4aba-866e-3217e9d5d752" type="APP:NOT_FOUND" >
-				<ee:transform doc:name="Transform Message" doc:id="9004b299-b4c0-4aa0-805e-d158e14def9a" >
-					<ee:message >
-						<ee:set-payload ><![CDATA[%dw 2.0
+            <on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate1" doc:id="d5d88f70-f007-4aba-866e-3217e9d5d752" type="APP:NOT_FOUND">
+                <ee:transform doc:name="Transform Message" doc:id="9004b299-b4c0-4aa0-805e-d158e14def9a">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
 output application/json
 ---
 {message: "Purchase Order not found"}]]></ee:set-payload>
-					</ee:message>
-					<ee:variables >
-						<ee:set-variable variableName="httpStatus" ><![CDATA[401]]></ee:set-variable>
-					</ee:variables>
-				</ee:transform>
-			</on-error-propagate>
-			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="8eaf19ad-fd9a-4aaa-bd54-479a21f1ff51" type="APP:ERROR_WS_GETPENDING">
-				<ee:transform doc:name="Transform Message" doc:id="41953db1-ffa7-449e-b442-03b34b0959e6" >
-					<ee:message >
-						<ee:set-payload ><![CDATA[%dw 2.0
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus"><![CDATA[401]]></ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="8eaf19ad-fd9a-4aaa-bd54-479a21f1ff51" type="APP:ERROR_WS_GETPENDING">
+                <ee:transform doc:name="Transform Message" doc:id="41953db1-ffa7-449e-b442-03b34b0959e6">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
 output application/json
 ---
 {message: error.description}]]></ee:set-payload>
-					</ee:message>
-					<ee:variables >
-						<ee:set-variable variableName="httpStatus" ><![CDATA[400]]></ee:set-variable>
-					</ee:variables>
-				</ee:transform>
-			</on-error-propagate>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus"><![CDATA[400]]></ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
         </error-handler>
     </flow>
     <flow name="demo-jde-atina-connector-console" doc:id="37978e01-7476-444a-8de5-84f439e46577">
@@ -157,5 +157,8 @@ output application/json
     </flow>
     <flow name="post:\v1\processPurchaseOrderApproveReject:application\json:demo-jde-atina-connector-config">
         <flow-ref doc:name="get-pending-orders-flow" doc:id="e8b95764-81fd-4d4c-8a2d-4fa2fec63ca6" name="get-pending-aprove-flow" />
+    </flow>
+    <flow name="post:\v1\login:application\json:demo-jde-atina-connector-config">
+		<flow-ref doc:name="login-flow" doc:id="aba6ea3b-23ec-4687-bfef-e904cc670635" name="login-flow"/>
     </flow>
 </mule>
