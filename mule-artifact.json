@@ -11,6 +11,6 @@
         },
         "id": "mule"
     },
-    "minMuleVersion": "4.6.22",
+    "minMuleVersion": "4.9.0",
     "javaSpecificationVersions": ["17"]
 }

@@ -1,22 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-
 	<groupId>com.mulesoft.connectors.examples</groupId>
 	<artifactId>jde-atina-connector-demo</artifactId>
 	<version>1.0.0</version>
 	<packaging>mule-application</packaging>
-
 	<name>jde-certification-pur-demo</name>
-
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-
-		<app.runtime>4.6.22</app.runtime>
-		<mule.maven.plugin.version>4.3.0</mule.maven.plugin.version>
+		<app.runtime>4.9.0</app.runtime>
+		<mule.maven.plugin.version>4.7.0</mule.maven.plugin.version>
 	</properties>
-
 	<build>
 		<plugins>
 			<plugin>
@@ -42,12 +37,12 @@
 					<compilerArgs>
 						<args>-parameters</args>
 					</compilerArgs>
+					<source>1.8</source>
 					<target>1.8</target>
 				</configuration>
 			</plugin>
 		</plugins>
 	</build>
-
 	<dependencies>
 		<dependency>
 			<groupId>org.mule.connectors</groupId>
@@ -64,7 +59,7 @@
 		<dependency>
 			<groupId>com.atina-connection</groupId>
 			<artifactId>mule-jde-atina-connector</artifactId>
-			<version>1.0.1-RC1</version>
+			<version>1.0.1-RC2</version>
 			<classifier>mule-plugin</classifier>
 		</dependency>
 		<dependency>
@@ -92,19 +87,23 @@
 			<classifier>mule-plugin</classifier>
 		</dependency>
 		<dependency>
-			<groupId>org.mule.module</groupId>
-			<artifactId>mule-java-module</artifactId>
-			<version>1.2.15</version>
-			<classifier>mule-plugin</classifier>
-		</dependency>
-		<dependency>
 			<groupId>org.mule.connectors</groupId>
 			<artifactId>mule-file-connector</artifactId>
 			<version>1.5.3</version>
 			<classifier>mule-plugin</classifier>
 		</dependency>
+		<dependency>
+			<groupId>com.mulesoft.connectivity.sb1</groupId>
+			<artifactId>sb1-anypoint-connector-model</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+			<classifier>mule-plugin</classifier>
+		</dependency><dependency>
+			<groupId>com.mulesoft.connectivity.dockia</groupId>
+    		<artifactId>dockia-anypoint-connector-model</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+			<classifier>mule-plugin</classifier>
+		</dependency>
 	</dependencies>
-
 	<repositories>
 		<repository>
 			<id>atina-central</id>
@@ -124,7 +123,6 @@
 			<layout>default</layout>
 		</repository>
 	</repositories>
-
 	<pluginRepositories>
 		<pluginRepository>
 			<id>mulesoft-releases</id>
@@ -136,5 +134,4 @@
 			</snapshots>
 		</pluginRepository>
 	</pluginRepositories>
-
 </project>

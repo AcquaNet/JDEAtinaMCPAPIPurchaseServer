@@ -21,7 +21,7 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
 	</jdeatina:config>
 	
 	<jdeatina:config name="JDE_Atina_Config_Non_WS_Operation" doc:name="JDE Atina Config" doc:id="0b370602-999f-4188-941f-55966cbcc87b" >
-		<jdeatina:connection jdeUser="${config.jdeUser}" jdePassword="${config.jdePassword}" jdeEnvironment="${config.jdeEnvironment}" jdeRole="${config.jdeRole}" microServicePort="${config.microServicePort}" microServiceName="${config.microServiceName}"/>
+		<jdeatina:connection jdeUser="${config.jdeUser}" jdePassword="${config.jdePassword}" jdeEnvironment="${config.jdeEnvironment}" jdeRole="${config.jdeRole}" microServicePort="${config.microServicePort}" microServiceName="${config.microServiceName}" microserviceTimeOut="2"/>
 	</jdeatina:config>
 	 
 </mule>
