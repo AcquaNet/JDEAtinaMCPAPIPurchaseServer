@@ -41,7 +41,8 @@ var expDateTime = |1970-01-01T00:00:00Z| + seconds(expSeconds)
 	role: vars.login.role,
 	user: vars.login.user,
 	expiresAt: expDateTime
-}]]></ee:set-payload>
+}
+* */]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
 		<set-variable value='#[%dw 2.0&#10;output application/java&#10;---&#10;(vars.outboundHeaders default {}) &#10;++ { "X-Approver-Token": vars.login."JDE Token" }]' doc:name="Set Header Response" doc:id="7d9640e1-df85-4435-8b15-b4f047c33779" variableName="outboundHeaders" />
@@ -65,10 +66,10 @@ var expDateTime = |1970-01-01T00:00:00Z| + seconds(expSeconds)
 	approver: {
 		entityId: payload."JDE A/B No" as Number
 	},
-	orderTypeCode:p('po.orderTypeCode'),
-	businessUnitCode:p('po.businessUnitCode'),
-	statusCodeNext:p('po.statusCodeNext'),
-	statusApproval:p('po.statusApproval')
+	orderTypeCode: p('po.orderTypeCode'),
+	businessUnitCode: p('po.businessUnitCode'),
+	statusCodeNext: p('po.statusCodeNext'),
+	statusApproval: p('po.statusApproval')
 }]]]></jdeatina:input-parameters>
 		</jdeatina:invoke-ws>
 		<logger level="INFO" doc:name="Logger" doc:id="a6f7158c-7f0a-44a6-823e-7b9ed23cb1d5" message="#[vars.orders]"/>

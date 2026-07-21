@@ -17,11 +17,11 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
 	<configuration-properties doc:name="JDE Configuration properties" doc:id="86855fdf-b0c0-4549-9e35-1306af718e47" file="jde-po-constants.properties" />
 	
 	<jdeatina:config name="JDE_Atina_Config_for_Web_Services" doc:name="JDE Atina Config" doc:id="4064df7e-0da7-41be-9652-bbcaf2b4a4d8" >
-		<jdeatina:connection jdeUser="${config.jdeUser}" jdePassword="${config.jdePassword}" jdeEnvironment="${config.jdeEnvironment}" jdeRole="${config.jdeRole}" wsConnection="true" microServiceName="${config.microServiceName}" microServicePort="${config.microServicePort}" />
+		<jdeatina:connection jdeUser="${config.jdeUser}" jdePassword="${config.jdePassword}" jdeEnvironment="${config.jdeEnvironment}" jdeRole="${config.jdeRole}" wsConnection="true" microServiceName="${config.microServiceName}" microServicePort="${config.microServicePort}" microserviceTimeOut="10"/>
 	</jdeatina:config>
 	
 	<jdeatina:config name="JDE_Atina_Config_Non_WS_Operation" doc:name="JDE Atina Config" doc:id="0b370602-999f-4188-941f-55966cbcc87b" >
-		<jdeatina:connection jdeUser="${config.jdeUser}" jdePassword="${config.jdePassword}" jdeEnvironment="${config.jdeEnvironment}" jdeRole="${config.jdeRole}" microServicePort="${config.microServicePort}" microServiceName="${config.microServiceName}" microserviceTimeOut="2"/>
+		<jdeatina:connection jdeUser="${config.jdeUser}" jdePassword="${config.jdePassword}" jdeEnvironment="${config.jdeEnvironment}" jdeRole="${config.jdeRole}" microServicePort="${config.microServicePort}" microServiceName="${config.microServiceName}" microserviceTimeOut="10"/>
 	</jdeatina:config>
 	 
 </mule>

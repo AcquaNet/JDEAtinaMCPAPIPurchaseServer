@@ -13,7 +13,7 @@
 			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry exported="true" kind="con" path="MULE_RUNTIME/org.mule.tooling.server.4.11.ee"/>
+	<classpathentry kind="con" path="MULE_RUNTIME/org.mule.tooling.server.4.11.ee"/>
 	<classpathentry kind="src" path="src/main/mule"/>
 	<classpathentry kind="src" path="src/main/java"/>
 	<classpathentry kind="src" path="src/main/resources"/>
