@@ -27,7 +27,14 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
 import fromBase64 from dw::core::Binaries
 import seconds from dw::core::Periods
 output application/json
-var jwtToken = vars.login."JDE Token"
+---
+{
+	environment: vars.login.environment,
+	role: vars.login.role,
+	user: vars.login.user 
+}
+/* comentario multilínea 
+ * var jwtToken = vars.login."JDE Token"
 var jwtPayload =
     (jwtToken splitBy ".")[1]
         then fromBase64($) as String
@@ -54,15 +61,16 @@ var expDateTime = |1970-01-01T00:00:00Z| + seconds(expSeconds)
 ---
 {
 	"JDE Token": attributes.headers."X-Approver-Token" as String default "",
-	"Transaction ID": 0,
+	"Correlation ID": 12345,
 	"JDE WS Connection": true
 }]]]></jdeatina:input-parameters>
 		</jdeatina:authenticate>
 		<jdeatina:invoke-ws wsName="oracle.e1.bssv.JP430000.ProcurementManager.getPurchaseOrdersForApprover" doc:name="Invoke ws getPurchaseOrdersForApprover" doc:id="fe9aa982-114f-468e-a95d-b6551167bb14" config-ref="JDE_Atina_Config_for_Web_Services" target="orders" >
-			<jdeatina:input-parameters ><![CDATA[#[output application/java
+			<jdeatina:input-parameters ><![CDATA[#[output application/json
 ---
 {
 	"JDE Token": payload."JDE Token",
+	"Correlation ID": 12345,
 	approver: {
 		entityId: payload."JDE A/B No" as Number
 	},
@@ -131,6 +139,7 @@ payload]]]></os:value>
 ---
 {
 	"JDE Token": attributes.headers."X-Approver-Token" as String default "",
+	"Correlation ID": 12345,
 	"Transaction ID": 0,
 	"JDE WS Connection": true
 }]]]></jdeatina:input-parameters>
@@ -140,6 +149,7 @@ payload]]]></os:value>
 ---
 {
 	"JDE Token": payload."JDE Token",
+	"Correlation ID": 12345,
 	header: {
 		purchaseOrderKey: {
 			documentTypeCode: vars.parameters.documentOrderTypeCode,
@@ -152,10 +162,11 @@ payload]]]></os:value>
 		<choice doc:name="Choice" doc:id="f7e4b870-27a8-4e51-bf92-f8df4bf6f93c" >
 			<when expression="#[!isEmpty(vars.ordersHeader.showPurchaseOrder)]">
 				<jdeatina:invoke-ws wsName="oracle.e1.bssv.JP430000.ProcurementManager.getPurchaseOrderDetailForApprover" doc:name="Invoke ws getPurchaseOrdersForApprover" doc:id="545ba4ff-9119-4472-8a62-3261d7576df0" config-ref="JDE_Atina_Config_for_Web_Services" target="ordersDetail">
-			<jdeatina:input-parameters><![CDATA[#[output application/java
+			<jdeatina:input-parameters><![CDATA[#[output application/json
 ---
 {
 	"JDE Token": payload."JDE Token",
+	"Correlation ID": 12345,
 	companyKeyOrderNo: vars.parameters.documentCompanyKeyOrderNo,
 	documentOrderTypeCode: vars.parameters.documentOrderTypeCode,
 	statusCodeNext: p('po.statusCodeNext'),
@@ -194,7 +205,7 @@ output application/json
 ---
 {
 	"JDE Token": attributes.headers."X-Approver-Token" as String default "",
-	"Transaction ID": 0,
+	"Correlation ID": 12345,
 	"JDE WS Connection": true
 }]]]></jdeatina:input-parameters>
 		</jdeatina:authenticate>
@@ -218,6 +229,7 @@ output application/json
 ---
 {
 	"JDE Token": vars.autenticate."JDE Token",
+	"Correlation ID": 12345,
 	p43081Version: p('po.p43081Version'),
 	businessUnit: vars.orderRetrieved.businessUnitCode,
 	companyKeyOrderNumber: vars.parameters.documentCompanyKeyOrderNo,
